@@ -1,7 +1,5 @@
 package com.isfin.islamicfinancial.entities;
 
-
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -21,12 +19,13 @@ public class CompanyProfile {
     private String industry;
     private String sector;
 
-    // Add more fields as per API response if needed
+    // New fields from Zoya / Alpha / Polygon
+    private Double totalDebt;
+    private Double totalRevenue;
+    private Double enterpriseValue;
+    private Double sharesOutstanding;
 
-    // Constructors
-    public CompanyProfile() {}
-
-    // Getters and setters
+    // Getters & Setters
     public String getSymbol() { return symbol; }
     public void setSymbol(String symbol) { this.symbol = symbol; }
 
@@ -50,4 +49,16 @@ public class CompanyProfile {
 
     public String getSector() { return sector; }
     public void setSector(String sector) { this.sector = sector; }
+
+    public Double getTotalDebt() { return totalDebt; }
+    public void setTotalDebt(Double totalDebt) { this.totalDebt = totalDebt; }
+
+    public Double getTotalRevenue() { return totalRevenue; }
+    public void setTotalRevenue(Double totalRevenue) { this.totalRevenue = totalRevenue; }
+
+    public Double getEnterpriseValue() { return enterpriseValue; }
+    public void setEnterpriseValue(Double enterpriseValue) { this.enterpriseValue = enterpriseValue; }
+
+    public Double getSharesOutstanding() { return sharesOutstanding; }
+    public void setSharesOutstanding(Double sharesOutstanding) { this.sharesOutstanding = sharesOutstanding; }
 }

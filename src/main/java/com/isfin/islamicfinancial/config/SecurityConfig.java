@@ -27,6 +27,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/login", "/api/users/signup").permitAll()   // allow login & signup
                         .requestMatchers("/api/fmp/**").permitAll()        // allow FMP endpoints
+                        .requestMatchers("/api/yahoo/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/client/**").hasRole("CLIENT")
                         .anyRequest().authenticated()

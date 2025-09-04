@@ -1,11 +1,9 @@
 package com.isfin.islamicfinancial.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.isfin.islamicfinancial.entities.CompanyProfile;
 import com.isfin.islamicfinancial.repositories.CompanyProfileRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
 
@@ -13,47 +11,68 @@ import java.util.Optional;
 public class CompanyProfileService {
 
     private final CompanyProfileRepository repository;
-    private final RestTemplate restTemplate;
+    private final MarketDataService marketDataService;
 
-    @Value("${fmp.api.base-url}")
-    private String fmpApiBaseUrl;
-
-    @Value("${fmp.api.key}")
-    private String fmpApiKey;
-
-    public CompanyProfileService(CompanyProfileRepository repository) {
+    public CompanyProfileService(CompanyProfileRepository repository,
+                                 MarketDataService marketDataService) {
         this.repository = repository;
-        this.restTemplate = new RestTemplate();
+        this.marketDataService = marketDataService;
     }
 
-    // Fetch profile from FMP v5 and save it to the database
+    /**
+     * Fetches combined market data for a symbol and saves/updates CompanyProfile in DB
+     */
     public CompanyProfile fetchAndSaveProfile(String symbol) {
-        String url = fmpApiBaseUrl + "company-profile?symbol=" + symbol + "&apikey=" + fmpApiKey;
+        // Call combined API
+        JsonNode combined = marketDataService.getCombinedData(symbol);
 
-        // v5 returns a JSON object, not an array
-        ResponseEntity<CompanyProfile> response = restTemplate.getForEntity(url, CompanyProfile.class);
+        JsonNode alpha = combined.get("alpha");
+        JsonNode polygon = combined.get("polygon");
 
-        CompanyProfile profile = response.getBody();
+        // Parse data safely (use defaults if missing)
+        Double price = alpha.path("Global Quote").path("05. price").asDouble(0);
+        Double marketCap = polygon.path("results").get(0).path("marketCap").asDouble(0);
 
-        if (profile != null) {
-            return repository.save(profile);
-        } else {
-            throw new RuntimeException("Profile not found for symbol: " + symbol);
-        }
+        String companyName = polygon.path("results").get(0).path("ticker").asText(symbol);
+        String industry = polygon.path("results").get(0).path("industry").asText("");
+        String sector = polygon.path("results").get(0).path("sector").asText("");
+
+        CompanyProfile profile = repository.findById(symbol).orElse(new CompanyProfile());
+        profile.setSymbol(symbol);
+        profile.setPrice(price);
+        profile.setMktCap(marketCap != 0 ? marketCap.longValue() : null);
+        profile.setCompanyName(companyName);
+        profile.setIndustry(industry);
+        profile.setSector(sector);
+
+        return repository.save(profile);
     }
 
-    // Retrieve a profile from the database
     public Optional<CompanyProfile> getProfileBySymbol(String symbol) {
         return repository.findById(symbol);
     }
 
     public CompanyProfile fetchProfileLive(String symbol) {
-        String url = fmpApiBaseUrl + "profile/" + symbol + "?apikey=" + fmpApiKey;
-        ResponseEntity<CompanyProfile[]> response = restTemplate.getForEntity(url, CompanyProfile[].class);
+        JsonNode combined = marketDataService.getCombinedData(symbol);
 
-        CompanyProfile[] profiles = response.getBody();
-        return (profiles != null && profiles.length > 0) ? profiles[0] : null;
+        JsonNode alpha = combined.get("alpha");
+        JsonNode polygon = combined.get("polygon");
+
+        Double price = alpha.path("Global Quote").path("05. price").asDouble(0);
+        Double marketCap = polygon.path("results").get(0).path("marketCap").asDouble(0);
+
+        String companyName = polygon.path("results").get(0).path("ticker").asText(symbol);
+        String industry = polygon.path("results").get(0).path("industry").asText("");
+        String sector = polygon.path("results").get(0).path("sector").asText("");
+
+        CompanyProfile profile = new CompanyProfile();
+        profile.setSymbol(symbol);
+        profile.setPrice(price);
+        profile.setMktCap(marketCap != 0 ? marketCap.longValue() : null);
+        profile.setCompanyName(companyName);
+        profile.setIndustry(industry);
+        profile.setSector(sector);
+
+        return profile;
     }
-
 }
-
