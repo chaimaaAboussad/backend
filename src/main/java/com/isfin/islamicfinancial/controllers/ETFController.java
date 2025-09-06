@@ -1,13 +1,16 @@
 package com.isfin.islamicfinancial.controllers;
 
 import com.isfin.islamicfinancial.entities.ETF;
+import com.isfin.islamicfinancial.entities.CompanyProfile;
 import com.isfin.islamicfinancial.services.ETFService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api/fmp/etf")
+@RequestMapping("/api/etfs")
 public class ETFController {
 
     private final ETFService etfService;
@@ -17,18 +20,29 @@ public class ETFController {
         this.etfService = etfService;
     }
 
-    // Fetch live ETF data by symbol without saving to DB
-    @GetMapping("/profile/{symbol}")
-    public ResponseEntity<ETF> getETFProfile(@PathVariable String symbol) {
-        try {
-            ETF etf = etfService.fetchETFLive(symbol); // fetch live data only
-            if (etf != null) {
-                return ResponseEntity.ok(etf);
-            } else {
-                return ResponseEntity.notFound().build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(null);
-        }
+    @GetMapping
+    public List<ETF> getAllETFs() {
+        return etfService.getAllETFs();
+    }
+
+    @GetMapping("/{id}")
+    public Optional<ETF> getETFById(@PathVariable Long id) {
+        return etfService.getETFById(id);
+    }
+
+    @PostMapping
+    public ETF saveETF(@RequestBody ETF etf) {
+        return etfService.saveETF(etf);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteETF(@PathVariable Long id) {
+        etfService.deleteETF(id);
+    }
+
+    // New endpoint to get live ETF/company profile
+    @GetMapping("/live/{symbol}")
+    public CompanyProfile getETFLive(@PathVariable String symbol) {
+        return etfService.fetchETFLive(symbol);
     }
 }

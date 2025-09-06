@@ -5,6 +5,8 @@ import com.isfin.islamicfinancial.services.CompanyProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/companyProfiles")
 public class CompanyProfileController {
@@ -31,4 +33,10 @@ public class CompanyProfileController {
 
         return ResponseEntity.ok(profile);
     }
+    // Get all company profiles
+    @GetMapping("/all")
+    public List<CompanyProfile> getAllCompanies() {
+        return service.getAllCompanyProfiles();
+    }
+
 }

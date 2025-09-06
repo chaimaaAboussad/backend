@@ -1,11 +1,10 @@
 package com.isfin.islamicfinancial.services;
 
 import com.isfin.islamicfinancial.entities.ETF;
+import com.isfin.islamicfinancial.entities.CompanyProfile;
 import com.isfin.islamicfinancial.repositories.ETFRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,18 +13,12 @@ import java.util.Optional;
 public class ETFService {
 
     private final ETFRepository etfRepository;
-    private final RestTemplate restTemplate;
-
-    @Value("${fmp.api.base-url}")
-    private String fmpApiBaseUrl;
-
-    @Value("${fmp.api.key}")
-    private String fmpApiKey;
+    private final MarketDataService marketDataService;
 
     @Autowired
-    public ETFService(ETFRepository etfRepository) {
+    public ETFService(ETFRepository etfRepository, MarketDataService marketDataService) {
         this.etfRepository = etfRepository;
-        this.restTemplate = new RestTemplate(); // initialize RestTemplate
+        this.marketDataService = marketDataService;
     }
 
     public List<ETF> getAllETFs() {
@@ -44,15 +37,8 @@ public class ETFService {
         etfRepository.deleteById(id);
     }
 
-    // Fetch live ETF data from FMP API
-    public ETF fetchETFLive(String symbol) {
-        String url = fmpApiBaseUrl + "etf-profile/" + symbol + "?apikey=" + fmpApiKey;
-        try {
-            ETF[] etfs = restTemplate.getForObject(url, ETF[].class);
-            return (etfs != null && etfs.length > 0) ? etfs[0] : null;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    // Fetch ETF/company live data using MarketDataService
+    public CompanyProfile fetchETFLive(String symbol) {
+        return marketDataService.fetchCompanyProfile(symbol);
     }
 }

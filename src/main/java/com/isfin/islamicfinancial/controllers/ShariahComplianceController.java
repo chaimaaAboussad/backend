@@ -54,14 +54,14 @@ public class ShariahComplianceController {
         }
     }
 
-    // Get all compliance records for a specific company
+    // Get all compliance records for a specific company (by ID)
     @GetMapping("/company/{companyId}")
     public ResponseEntity<List<ShariahCompliance>> getComplianceByCompanyId(@PathVariable Long companyId) {
         List<ShariahCompliance> records = shariahComplianceService.getComplianceRecordsByCompanyId(companyId);
         return ResponseEntity.ok(records);
     }
 
-    // Check if a company is compliant (boolean)
+    // Check if a company is compliant (boolean) by ID
     @GetMapping("/check/{companyId}")
     public ResponseEntity<Boolean> checkComplianceByCompanyId(@PathVariable Long companyId) {
         boolean compliant = shariahComplianceService.isCompanyCompliant(companyId);
@@ -69,22 +69,17 @@ public class ShariahComplianceController {
     }
 
     // ----------------------------
-    // NEW ENDPOINT: Check compliance by symbol & standard
+    // Check compliance by symbol & standard
     // ----------------------------
     @GetMapping("/check")
     public ResponseEntity<ShariahCompliance> checkComplianceBySymbol(
             @RequestParam String symbol,
-            @RequestParam String standard // e.g., "AAOIFI", "DJIMI", etc.
+            @RequestParam String standard // e.g., "AAOIFI", "DJIM", "FTSE"
     ) {
         try {
-            // Convert string to enum
             ShariahStandard shariahStandard = ShariahStandard.valueOf(standard.toUpperCase());
-
-            // Call service to calculate compliance
             ShariahCompliance compliance = shariahComplianceService.checkCompliance(symbol, shariahStandard);
-
             return ResponseEntity.ok(compliance);
-
         } catch (IllegalArgumentException e) {
             // Invalid standard provided
             return ResponseEntity.badRequest().body(null);

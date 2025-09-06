@@ -5,6 +5,7 @@ import com.isfin.islamicfinancial.entities.CompanyProfile;
 import com.isfin.islamicfinancial.repositories.CompanyProfileRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -75,4 +76,9 @@ public class CompanyProfileService {
 
         return profile;
     }
+    // Fetch all saved company profiles
+    public List<CompanyProfile> getAllCompanyProfiles() {
+        return repository.findAll();
+    }
+
 }

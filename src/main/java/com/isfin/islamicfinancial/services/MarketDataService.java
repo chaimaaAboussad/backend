@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @Service
 public class MarketDataService {
@@ -18,10 +19,6 @@ public class MarketDataService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${zoya.api.key}")
-    private String zoyaApiKey;
-    @Value("${zoya.api.base-url}")
-    private String zoyaBaseUrl;
 
     @Value("${alpha.api.key}")
     private String alphaApiKey;
@@ -40,49 +37,72 @@ public class MarketDataService {
         CompanyProfile profile = new CompanyProfile();
         profile.setSymbol(ticker);
 
-        // 1️⃣ Zoya API - financial data
+        // ------------------------
+        // Alpha Vantage API - stock price + financials
+        // ------------------------
         try {
-            String url = zoyaBaseUrl + "/companies/" + ticker + "/financials?apikey=" + zoyaApiKey;
-            ResponseEntity<Map> resp = restTemplate.getForEntity(url, Map.class);
-            Map data = resp.getBody();
-            if (data != null) {
-                Map financialData = (Map) data.get("financialData");
-                if (financialData != null) {
-                    profile.setTotalDebt(toDouble(financialData.get("totalDebt")));
-                    profile.setTotalRevenue(toDouble(financialData.get("totalRevenue")));
-                }
-                Map keyStats = (Map) data.get("defaultKeyStatistics");
-                if (keyStats != null) {
-                    profile.setEnterpriseValue(toDouble(keyStats.get("enterpriseValue")));
-                    profile.setSharesOutstanding(toDouble(keyStats.get("sharesOutstanding")));
-                }
+            // Stock price (Global Quote)
+            String quoteUrl = alphaBaseUrl + "/query?function=GLOBAL_QUOTE&symbol=" + ticker + "&apikey=" + alphaApiKey;
+            Map<String, Object> quoteResp = restTemplate.getForObject(quoteUrl, HashMap.class);
+            if (quoteResp != null && quoteResp.containsKey("Global Quote")) {
+                Map<String, String> quote = (Map<String, String>) quoteResp.get("Global Quote");
+                profile.setPrice(toDouble(quote.get("05. price")));
             }
-        } catch (Exception e) {
-            System.out.println("Zoya API error: " + e.getMessage());
-        }
 
-        // 2️⃣ Alpha Vantage API - stock price
-        try {
-            String url = alphaBaseUrl + "/query?function=GLOBAL_QUOTE&symbol=" + ticker + "&apikey=" + alphaApiKey;
-            Map<String, Object> resp = restTemplate.getForObject(url, HashMap.class);
-            if (resp != null && resp.containsKey("Global Quote")) {
-                Map<String, String> quote = (Map<String, String>) resp.get("Global Quote");
-                profile.setPrice(Double.valueOf(quote.get("05. price")));
+            // Income Statement
+            String incomeUrl = alphaBaseUrl + "/query?function=INCOME_STATEMENT&symbol=" + ticker + "&apikey=" + alphaApiKey;
+            Map<String, Object> incomeResp = restTemplate.getForObject(incomeUrl, HashMap.class);
+            if (incomeResp != null && incomeResp.containsKey("annualReports")) {
+                List<Map<String, String>> reports = (List<Map<String, String>>) incomeResp.get("annualReports");
+                if (!reports.isEmpty()) {
+                    Map<String, String> latest = reports.get(0);
+                    profile.setTotalRevenue(toDouble(latest.get("totalRevenue")));
+                    profile.setInterestIncome(toDouble(latest.get("interestIncome")));
+                }
             }
+
+            // Balance Sheet
+            String balanceUrl = alphaBaseUrl + "/query?function=BALANCE_SHEET&symbol=" + ticker + "&apikey=" + alphaApiKey;
+            Map<String, Object> balanceResp = restTemplate.getForObject(balanceUrl, HashMap.class);
+            if (balanceResp != null && balanceResp.containsKey("annualReports")) {
+                List<Map<String, String>> reports = (List<Map<String, String>>) balanceResp.get("annualReports");
+                if (!reports.isEmpty()) {
+                    Map<String, String> latest = reports.get(0);
+                    profile.setTotalDebt(toDouble(latest.get("shortLongTermDebtTotal")));
+                    profile.setSharesOutstanding(toDouble(latest.get("commonStockSharesOutstanding")));
+                    profile.setCash(toDouble(latest.get("cashAndCashEquivalents")));
+                    profile.setShortTermInvestments(toDouble(latest.get("shortTermInvestments")));
+                    profile.setAccountsReceivable(toDouble(latest.get("accountsReceivable")));
+                    profile.setTotalAssets(toDouble(latest.get("totalAssets")));
+                }
+            }
+
         } catch (Exception e) {
             System.out.println("Alpha Vantage error: " + e.getMessage());
         }
 
-        // 3️⃣ Polygon.io API - market cap & industry/sector
+        // ------------------------
+        // Polygon.io API - company details
+        // ------------------------
         try {
             String url = polygonBaseUrl + "/v3/reference/tickers/" + ticker + "?apiKey=" + polygonApiKey;
-
             Map<String, Object> resp = restTemplate.getForObject(url, HashMap.class);
+
             if (resp != null && resp.containsKey("results")) {
                 Map results = (Map) resp.get("results");
                 profile.setMktCap(toLong(results.get("market_cap")));
-                profile.setIndustry((String) results.get("industry"));
-                profile.setSector((String) results.get("sector"));
+                profile.setCompanyName((String) results.get("name"));
+                profile.setIndustry((String) results.get("sic_description"));
+                profile.setSector((String) results.get("market"));
+                profile.setDescription((String) results.get("description"));
+                profile.setEmployees(toLong(results.get("total_employees")));
+                profile.setWebsite((String) results.get("homepage_url"));
+
+                Map branding = (Map) results.get("branding");
+                if (branding != null) {
+                    profile.setLogoUrl((String) branding.get("logo_url"));
+                    profile.setIconUrl((String) branding.get("icon_url"));
+                }
             }
         } catch (Exception e) {
             System.out.println("Polygon.io error: " + e.getMessage());
