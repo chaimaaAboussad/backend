@@ -26,8 +26,8 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/login", "/api/users/signup").permitAll()   // allow login & signup
-                        .requestMatchers("/api/fmp/**").permitAll()        // allow FMP endpoints
-                        .requestMatchers("/api/yahoo/**").permitAll()
+                        .requestMatchers("/api/alpha/**").permitAll()       // allow Alpha API endpoints
+                        .requestMatchers("/api/polygon/**").permitAll()     // allow Polygon API endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/client/**").hasRole("CLIENT")
                         .anyRequest().authenticated()
