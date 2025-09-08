@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/login", "/api/users/signup").permitAll()   // allow login & signup
                         .requestMatchers("/api/alpha/**").permitAll()       // allow Alpha API endpoints
                         .requestMatchers("/api/polygon/**").permitAll()     // allow Polygon API endpoints
+                        .requestMatchers("/api/market/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/client/**").hasRole("CLIENT")
                         .anyRequest().authenticated()
