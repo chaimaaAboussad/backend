@@ -31,6 +31,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/market/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/client/**").hasRole("CLIENT")
+                        .requestMatchers("/api/users/**").hasRole("ADMIN") // only admin can fetch/update/delete
                         .anyRequest().authenticated()
                 )
                 .httpBasic(withDefaults());  // basic auth for other endpoints

@@ -13,19 +13,18 @@ public class Watchlist {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id")
-    private Client client;
+    @JoinColumn(name = "user_id", nullable = false)  // link to User
+    private User user;
 
     // Constructors
     public Watchlist() {}
 
-    public Watchlist(String name, Client client) {
+    public Watchlist(String name, User user) {
         this.name = name;
-        this.client = client;
+        this.user = user;
     }
 
     // Getters and setters
-
     public Long getId() {
         return id;
     }
@@ -38,11 +37,11 @@ public class Watchlist {
         this.name = name;
     }
 
-    public Client getClient() {
-        return client;
+    public User getUser() {
+        return user;
     }
 
-    public void setClient(Client client) {
-        this.client = client;
+    public void setUser(User user) {
+        this.user = user;
     }
 }

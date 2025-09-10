@@ -2,6 +2,9 @@ package com.isfin.islamicfinancial.entities;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "users") // Avoid default table name "user" which is a reserved word in some DBs
@@ -62,5 +65,17 @@ public class User {
     public void setRole(String role) {
         this.role = role;
     }
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Watchlist> watchlists = new ArrayList<>();
+
+    public List<Watchlist> getWatchlists() {
+        return watchlists;
+    }
+
+    public void setWatchlists(List<Watchlist> watchlists) {
+        this.watchlists = watchlists;
+    }
+
 
 }
